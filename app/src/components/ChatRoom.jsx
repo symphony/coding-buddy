@@ -12,6 +12,7 @@ import { UserListContext, MsgContext } from "../App.js";
 
 
 function ChatRoom(props) {
+  const { room } = props;
   const { socket } = useContext(SocketContext);
   const { recipient, user } = useContext(UserListContext);
   const { username } = props;
@@ -32,6 +33,8 @@ function ChatRoom(props) {
   const handleReceivePublicMessage = useCallback(
     (pongData) => {
       // console.log("PONG", pongData)
+      console.log("PONG DATA AND ROOM in chatroom.js", pongData, room)
+      if (false) return
       const newPublicMessage = makePublicMessage(pongData);
       setMessages((messages) => [...messages, newPublicMessage]);
       moveScrollToReceiveMessage();
@@ -67,12 +70,17 @@ function ChatRoom(props) {
         <span>{username}</span>, Welcome!
       </div>
       <div className="chat-window card" ref={chatWindow}>
+
         {messages.map((message, index) => {
+
           const { nickname, content, time, user } = message;
           let recipient = "";
           message.recipient
             ? (recipient = message.recipient)
             : (recipient = "all");
+          console.log("nickname in 79", nickname)
+          console.log('message', message)
+
           return (
             <div key={index} className="d-flex flex-row">
               {nickname && (
@@ -82,12 +90,14 @@ function ChatRoom(props) {
                   {nickname} to {recipient}: {content}
                 </div>
               )}
-            <div className="time">{time}</div>
+              <div className="time">{time}</div>
             </div>
           );
         })}
       </div>
-      <MessageForm nickname={username} recipient={recipient} user={user} />
+
+      <MessageForm nickname={username} recipient={recipient} user={user} room={room} />
+
     </div>
   );
 

@@ -80,7 +80,6 @@ const currentUsers = {}; // => {username : socket.id}
 const usersInRooms = {};
 
 io.on("connection", (socket) => { //여기서 이미 socket id generation
-  console.log('CLIENT CONNECTED', socket.id);
   const roomName = "plaza";
   const session = socket.request.session;
   session.save();
@@ -368,6 +367,17 @@ io.on("connection", (socket) => { //여기서 이미 socket id generation
   });
 
   // --------------- SEND MESSAGE ---------------
+
+  /* from MessageForm.jsx; this is requestData
+
+        socket.emit(SOCKET_EVENT.SEND_MESSAGE, {
+        nickname, // @@ UNDEFINED - JORDAN
+        content: typingMessage,
+        user,
+        room
+      });
+  */
+
   socket.on("SEND_MESSAGE", (requestData) => {
     const responseData = {
       ...requestData,
@@ -385,8 +395,6 @@ io.on("connection", (socket) => { //여기서 이미 socket id generation
 
   /* 오브젝트에서 종료되는 유저 삭제 */
   socket.on("disconnect", () => {
-    // console.log("Server.js - DISCONNECT", socket.id);
-
     const alluserNames = Object.keys(currentUsers);
     let disconnectedUsername;
     alluserNames.forEach((name) => {

@@ -4,9 +4,10 @@ import Canvas from "./Canvas";
 import "./Game.scss";
 import Chat from "./Chat";
 import Online from "./Online";
-import Profiles from "./Profile.jsx";
+import Profile from "./Profile.jsx";
 
 import { useLocation } from "react-router-dom";
+import FriendList from "./FriendsList";
 
 export default function Game(props) {
   const location = useLocation();
@@ -43,7 +44,9 @@ export default function Game(props) {
   // if (location.state !== null) {
 
   return (
-    <>
+
+    <div className='main'>
+
       <div className="main-container">
         {/* {(location.state === null) && navigate("/")} */}
         {/* <Canvas username={location.state[0] || 'guest'} avatar={location.state[1]} sendData={props.sendData} sendMessage={sendMessage} sendPrivateMessage={sendPrivateMessage} room={props.room} /> */}
@@ -61,11 +64,14 @@ export default function Game(props) {
           username={props.username}
           room={props.room}
           handleSubmitNickname={props.handleSubmitNickname}
-          // nickname={props.username}
+        // nickname={props.username}
         />
-        <Online />
-        <Profiles />
       </div>
-    </>
+      <div className="side-bar">
+          <FriendList />
+          <Online />
+          <Profile />
+        </div>
+    </div>
   );
 }

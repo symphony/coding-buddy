@@ -8,6 +8,7 @@ const facing = {
 }
 // facing direction
 const cycleLoop = [0, 1, 2, 3];
+
 class Characters {
 
   constructor(config) {

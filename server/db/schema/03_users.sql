@@ -1,20 +1,8 @@
-INSERT INTO users
-  (username, password, email, avatar_id)
+INSERT INTO
+  users (username, password, email, avatar_id)
 VALUES
-  ('moon', 'moon', 'test@test.com', 3);
-INSERT INTO users
-  (username, password, email, avatar_id)
-VALUES
-  ('heesoo', 'heesoo', 'test1@test.com', 4);
-INSERT INTO users
-  (username, password, email, avatar_id)
-VALUES
-  ('mike', 'mike', 'test2@test.com', 1);
-INSERT INTO users
-  (username, password, email, avatar_id)
-VALUES
-  ('jordan', 'jordan', 'test3@test.com', 2);
-INSERT INTO users
-  (username, password, email, avatar_id)
-VALUES
-  ('wakeel', 'wakeel', 'test4@test.com', 2);
+  ('moon', 'moon', 'test@test.com', 2),
+  ('heesoo', 'heesoo', 'test1@test.com', 3),
+  ('mike', 'mike', 'test2@test.com', 0),
+  ('jordan', 'jordan', 'test3@test.com', 1),
+  ('wakeel', 'wakeel', 'test4@test.com', 1);

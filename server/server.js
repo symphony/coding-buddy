@@ -1,16 +1,19 @@
-
-//@@@@@@@socket ID SPELLING FIX!!
-
-// server running with nodemon : npm run dev
 require("dotenv").config();
+const { Server } = require("socket.io"); //socketIo
+const { Pool } = require("pg");
+const { createAdapter } = require("@socket.io/postgres-adapter"); //app.get, 안써도 socket.io 안에서 직접 postgres 연결이 가능. root path 따로 설정 불필요.
 const cors = require("cors");
-const bodyParser = require("body-parser");
-const PORT = process.env.PORT || 8000;
 const express = require("express");
 const session = require("express-session");
-const app = express();
 const httpServer = require("http").createServer(app);
-const { Server } = require("socket.io"); //socketIo
+const bodyParser = require("body-parser");
+
+
+
+
+// = server config =
+const PORT = process.env.PORT || 3001;
+const app = express();
 const io = new Server(httpServer, {
   cors: {
     origin: "http://localhost:3000", //client
@@ -18,32 +21,6 @@ const io = new Server(httpServer, {
   },
 });
 
-// ================ HELPER FUNCS ================= //
-const getUserLang = (userID) => {
-  return pool.query(
-    `SELECT user_id, languages.language_name 
-    from user_language
-
-    JOIN languages 
-    ON languages.id = user_language.language_id
-
-    WHERE user_id = $1`,
-    [userID]
-  )
-    .then((result) => {
-      return result.rows.map((row) => row.language_name) //return array of languages
-    }
-    )
-}
-
-
-const { createAdapter } = require("@socket.io/postgres-adapter"); //app.get, 안써도 socket.io 안에서 직접 postgres 연결이 가능. root path 따로 설정 불필요.
-const sessionMiddleware = session({
-  secret: "coding_buddy",
-  cookie: { maxAge: 60000 },
-});
-const { getOneUserLanguages } = require("./coding_buddy_db");
-const { Pool } = require("pg");
 const pool = new Pool({
   user: process.env.PGUSER,
   host: process.env.PGHOST,
@@ -51,6 +28,15 @@ const pool = new Pool({
   password: process.env.PGPASSWORD,
   port: process.env.PGPORT,
 });
+
+// = middleware =
+const sessionMiddleware = session({
+  secret: "coding_buddy",
+  cookie: { maxAge: 60000 },
+});
+
+io.adapter(createAdapter(pool));
+
 
 //G. socket(server)
 //G. create a new instance of a socket handler
@@ -60,27 +46,41 @@ const pool = new Pool({
 app.use(cors());
 app.use(sessionMiddleware);
 app.use(bodyParser.json());
-app.use(
-  bodyParser.urlencoded({
-    extended: true,
-  })
-);
-
+app.use(bodyParser.urlencoded({ extended: true, }));
 io.use((socket, next) => {
   sessionMiddleware(socket.request, {}, next);
 });
 
-io.adapter(createAdapter(pool));
+
+
+
+
+// ================ Queries ================= //
+const getUserLang = (userID) => {
+  return pool.query(
+    `SELECT user_id, languages.language_name
+    from user_language
+
+    JOIN languages
+    ON languages.id = user_language.language_id
+
+    WHERE user_id = $1`,
+    [userID]
+  )
+    .then((result) => {
+      return result.rows.map((row) => row.language_name); //return array of languages
+    }
+    );
+};
+
 
 
 // store all users' socket id with username key-value pair
-let currentUsers = {}; // => {username : socket.id}
+const currentUsers = {}; // => {username : socket.id}
 const usersInRooms = {};
 
-
-
 io.on("connection", (socket) => { //여기서 이미 socket id generation
-  console.log('CLIENT CONNECTED', socket.id)
+  console.log('CLIENT CONNECTED', socket.id);
   const roomName = "plaza";
   const session = socket.request.session;
   session.save();
@@ -89,10 +89,10 @@ io.on("connection", (socket) => { //여기서 이미 socket id generation
   socket.on("friendsList", ({ newSocketID, user, userID }) => {
     // check this id is in currentUsers Object
     const alluserNames = Object.keys(currentUsers);
-    const currentUser = alluserNames.find((username) => currentUsers[username] === newSocketID)
+    const currentUser = alluserNames.find((username) => currentUsers[username] === newSocketID);
 
-    //@@upgrade later @mike 
-    if (!currentUser) return console.log('user not found', 'allusernames', alluserNames, 'newSocketID', newSocketID)
+    //@@upgrade later @mike
+    if (!currentUser) return console.log('user not found', 'allusernames', alluserNames, 'newSocketID', newSocketID);
 
     pool.query(`
       SELECT users.id, users.username, added_users.id AS friend_id, added_users.username AS friend_name
@@ -114,16 +114,15 @@ io.on("connection", (socket) => { //여기서 이미 socket id generation
           const promises = allusersTable.map(
             async (row) => { //add 'ASYNC' in front of the arrow function.
               //ASYNC FUNCTION, YOU ARE RETURNING A PROMISE.
-              row.languages = await getUserLang(row.friend_id) //to make it synchronous // returning one promise
-              // we call promise function for all friends. 
+              row.languages = await getUserLang(row.friend_id); //to make it synchronous // returning one promise
+              // we call promise function for all friends.
               // we need to ensure to resolve for ALL friends.
             }
-          )
+          );
           Promise.all(promises) //wait for all promises to resolve
             .then((res) => {
-              console.log("allusersTable", allusersTable)
               socket.emit("friendsListBack", allusersTable);
-            })
+            });
         }
       });
 
@@ -157,7 +156,7 @@ io.on("connection", (socket) => { //여기서 이미 socket id generation
 
 
 
-  })
+  });
 
   socket.on('sendData', data => { //이 data는 어디서옴?
 
@@ -165,14 +164,14 @@ io.on("connection", (socket) => { //여기서 이미 socket id generation
 
     // console.log('got data', data);
     if (!usersInRooms[room]) {
-      usersInRooms[room] = {}
+      usersInRooms[room] = {};
     }
     //when usersInRooms have some properties
     for (const rooms in usersInRooms) {
       // console.log(usersInRooms[rooms])
       for (const user in usersInRooms[rooms]) { //이건 왜 room아니고 rooms 임?
         if (room !== rooms && userState.username === user) {
-          delete usersInRooms[rooms][userState.username] //뭐하는 코드?
+          delete usersInRooms[rooms][userState.username]; //뭐하는 코드?
         }
       }
     }
@@ -190,12 +189,8 @@ io.on("connection", (socket) => { //여기서 이미 socket id generation
   //@@THIS IS NOT FIRED
   socket.on("SET USERNAME", (obj) => {
     //Login.jsx 의 setUser(res.data.userName)
-    console.log('obj', obj)
     const { username, socketID } = obj;
-    console.log("RECONNECTION", username, socketID)
-
     currentUsers[username] = socketID;
-    console.log('currentusers in server.js', currentUsers)
     pool.query(
       "SELECT id, username AS name, email, avatar_id FROM users",
       (err, res) => {
@@ -206,7 +201,7 @@ io.on("connection", (socket) => { //여기서 이미 socket id generation
           (err, res_1) => {
             // res.rows_1 => {id(languageID): , user_id: , language_name: }
             const userIDAndLang = res_1.rows;
-            const loginUsersData = {}
+            const loginUsersData = {};
             allUsersObj.map(user => {
               if (currentUsers[user.name]) {
                 loginUsersData[user.name] = {
@@ -214,12 +209,12 @@ io.on("connection", (socket) => { //여기서 이미 socket id generation
                   email: user.email,
                   avatar_id: user.avatar_id,
                   languages: []
-                }
+                };
                 userIDAndLang.map(lang => {
                   if (user.id === lang.user_id) {
-                    loginUsersData[user.name].languages.push(lang.language_name)
+                    loginUsersData[user.name].languages.push(lang.language_name);
                   }
-                })
+                });
               }
             });
             // console.log(loginUsersData)
@@ -233,7 +228,7 @@ io.on("connection", (socket) => { //여기서 이미 socket id generation
         );
 
 
-        // const alluserNames = Object.keys(currentUsers); 
+        // const alluserNames = Object.keys(currentUsers);
         // alluserNames.forEach((name) => {
         //   io.to(currentUsers[name])
         //     .emit("all user names", { "users": alluserNames });
@@ -380,17 +375,24 @@ io.on("connection", (socket) => { //여기서 이미 socket id generation
       time: new Date(),
     };
     io.emit("RECEIVE_MESSAGE", responseData);
-
+    //responseData = chat message
+    //@@@@@@ ChatRoom.jsx line 21
+    // console.log(
+    //   `"SEND_MESSAGE" is fired with data: ${JSON.stringify(responseData)}`
+    // );
+    io.emit("dataToCanvas", responseData);
   });
 
   /* 오브젝트에서 종료되는 유저 삭제 */
   socket.on("disconnect", () => {
+    // console.log("Server.js - DISCONNECT", socket.id);
+
     const alluserNames = Object.keys(currentUsers);
-    let disconnectedUsername
+    let disconnectedUsername;
     alluserNames.forEach((name) => {
       if (currentUsers[name] === socket.id)
         delete currentUsers[name];
-      disconnectedUsername = name
+      disconnectedUsername = name;
     }); // {"users": [name1, name2] }
     // console.log("Server.js - DISCONNECT - CURRENT USERS", currentUsers);
     io.emit("update login users information", { disconnectedUser: disconnectedUsername }); // App.jsx & Recipients.jsx 로 보내기
@@ -541,8 +543,7 @@ app.post("/register", (req, res) => {
 //   );
 // });
 
+// = start server - default port 3001 =
 httpServer.listen(PORT, () => {
-  console.log(
-    `Server Started on port ${PORT}, ${new Date().toLocaleString()} #####`
-  );
+  console.log(`Server Started on port ${PORT}, ${new Date().toLocaleString()} #####`);
 });

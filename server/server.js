@@ -5,15 +5,15 @@ const { createAdapter } = require("@socket.io/postgres-adapter"); //app.get, 안
 const cors = require("cors");
 const express = require("express");
 const session = require("express-session");
-const httpServer = require("http").createServer(app);
 const bodyParser = require("body-parser");
 
 
 
 
 // = server config =
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 8000;
 const app = express();
+const httpServer = require("http").createServer(app);
 const io = new Server(httpServer, {
   cors: {
     origin: "http://localhost:3000", //client
@@ -421,7 +421,6 @@ app.post("/login", (req, res) => {
 
   const email = req.body.userEmail;
   const password = req.body.userPassword;
-
   // and password.. userName=$1 AND userpassword=$2
   return pool.query(
     "SELECT * FROM users WHERE email=$1 AND password=$2",

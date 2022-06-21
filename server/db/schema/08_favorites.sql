@@ -8,7 +8,6 @@ INSERT INTO favorites (added_by, added)
   VALUES (1, 2);
 INSERT INTO favorites (added_by, added)
   VALUES (1, 4);
-
 INSERT INTO favorites (added_by, added)
   VALUES (2, 4);
 INSERT INTO favorites (added_by, added)

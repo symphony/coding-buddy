@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const fs = require("fs");
 const { Client } = require("pg");
-const dbParams = require("../lib/db.js");
+const dbParams = require("../lib/db");
 const db = new Client(dbParams);
 
 const runSchemaFiles = async () => {
@@ -14,6 +14,7 @@ const runSchemaFiles = async () => {
   }
 };
 
+// not needed. seed files in schema
 // const runSeedFiles = async () => {
 //   const schemaFilenames = fs.readdirSync("../db/seeds");
 

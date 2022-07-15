@@ -1,7 +1,8 @@
 import { useEffect, useContext, useState } from "react";
 import { SocketContext } from "../App.js";
-import { UserListContext } from '../App.js'
-import Avatar from "./Avatar.jsx"
+import { UserListContext } from '../App.js';
+// import FriendList from "./FriendsList.jsx";
+import Avatar from "./Avatar.jsx";
 import Menu from "./Menu.jsx";
 import Profile from "./Profile.jsx";
 import './Online.scss'
@@ -46,4 +47,4 @@ export default function Online(props) {
       <div>{usersOnline}</div>
     </div>
   );
-}
+};

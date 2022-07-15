@@ -62,22 +62,14 @@ const usersInRooms = {};
 io.on("connection", (socket) => {
   const session = socket.request.session;
   session.save();
-  console.log("MAKE NEW CONNECTION") // checked
-  console.log(currentUsers)
   // LOGIN USER CONNECTED
   // socketID and username matching triggered when user login
   socket.on("SET USERNAME", (obj) => {
     // console.log("SET USERNAME", obj)
     //Login.jsx 의 setUser(res.data.userName)
     const { username, socketID } = obj;
-    console.log("RECIEVED DATA", username, socketID)
-    // only work after login not refresh
-    // console.log("Connected ", username, socketID);
-    // after refresh, socketid undefined
     currentUsers[username] = socketID;
-    console.log(currentUsers)
-    pool.query(
-      "SELECT id, username AS name, email, avatar_id FROM users",
+    pool.query("SELECT id, username AS name, email, avatar_id FROM users",
       (err, res) => {
         // res.rows => {id: , name: , email: , avatar_id}
         const allUsersObj = res.rows;
@@ -103,11 +95,8 @@ io.on("connection", (socket) => {
                 });
               }
             });
-            console.log('loginUsersData', loginUsersData)
-            console.log('currentUser', currentUsers)
             // currentUsers = {name: socketID}
             const alluserNames = Object.keys(loginUsersData);
-            console.log("FILTER ONLINE USERS",loginUsersData)
             alluserNames.forEach((name) => {
               io.to(currentUsers[name]) // socketID
                 .emit("all user names", { "users": loginUsersData });// all user names
@@ -357,8 +346,6 @@ io.on("connection", (socket) => {
     const senderSocketID = obj.senderSocketId;
 
     const recipientSocketId = currentUsers[recipient.value]; // get target's socketid
-    // console.log("SENDERSOCKETID", senderSocketID);
-    // console.log(currentUsers);
     io
       .to(recipientSocketId)
       .emit("PRIVATE", responseData);
@@ -427,8 +414,7 @@ io.on("connection", (socket) => {
       time: new Date(),
     };
     io.to(roomName).emit("RECEIVE_MESSAGE", responseData);
-    console.log(
-      `UPDATE_NICKNAME is fired with data: ${JSON.stringify(responseData)}`
+    console.log(`UPDATE_NICKNAME is fired with data: ${JSON.stringify(responseData)}`
     );
   });
 
@@ -436,18 +422,15 @@ io.on("connection", (socket) => {
 
 
   /* 오브젝트에서 종료되는 유저 삭제 */
+  // todo need to test this function and make sure offline user is deleted from other users online list
   socket.on("disconnect", () => {
-    // console.log("Server.js - DISCONNECT", socket.id);
-
     const alluserNames = Object.keys(currentUsers);
     let disconnectedUsername;
     alluserNames.forEach((name) => {
       if (currentUsers[name] === socket.id)
-      delete currentUsers[name];
+        delete currentUsers[name];
       disconnectedUsername = name;
     }); // {"users": [name1, name2] }
-    // console.log("Server.js - DISCONNECT - CURRENT USERS", currentUsers);
-    console.log('DISCONNECT A USER', currentUsers);
     io.emit("update login users information", { disconnectedUser: disconnectedUsername }); // App.jsx & Recipients.jsx 로 보내기
   });
 
@@ -475,7 +458,6 @@ app.post("/login", (req, res) => {
     [email, password],
     (err, res_1) => {
       if (err) throw err;
-      // console.log(res_1.rows);
       if (res_1.rows[0]) {
         // user exist
         // get followeds
@@ -493,7 +475,6 @@ app.post("/login", (req, res) => {
             const userLanguages = [];
             if (err) throw err;
             if (res_2.rows.length > 0) {
-              // console.log("find user's languages", res_2.rows);
               res_2.rows.forEach((obj) => {
                 userLanguages.push(obj.language_id);
               });

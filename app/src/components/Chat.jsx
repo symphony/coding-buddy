@@ -9,8 +9,9 @@ export default function Chat(props) {
     <>
       <div className="chatroom">
         <Recipient />
-        <ChatRoom username={props.username} room={props.room} recipient={''} />
+        <ChatRoom username={props.username} room={props.room} />
+
       </div>
     </>
-  )
+  );
 }

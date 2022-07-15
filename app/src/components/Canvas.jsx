@@ -1,10 +1,12 @@
-import React, { useEffect, useRef, useState, useContext } from "react";
-import Characters from "./helper/Characters";
-import { SocketContext } from "../App";
+import { useEffect, useRef, useState, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { SocketContext } from "../App";
 import Cookies from 'universal-cookie';
 
+import Characters from "./helper/Characters";
+import selectAvatar from "./helper/selectAvatar";
 
+// = main component =
 const Canvas = (props) => {
   const { socket } = useContext(SocketContext);
   const canvasRef = useRef(null);
@@ -17,12 +19,12 @@ const Canvas = (props) => {
       y: 420,
       currentDirection: 0,
       frameCount: 0,
-      avatar: props.avatar,
+      avatar: selectAvatar(props.avatar || 1),
     }),
   });
-  const cookies = new Cookies()
-  const allCookies = cookies.getAll()
-  const userDataInCookies = allCookies.userdata
+  const cookies = new Cookies();
+  const allCookies = cookies.getAll();
+  const userDataInCookies = allCookies.userdata;
   const navigate = useNavigate();
   const roomLists = {
     plaza: '/game/plaza',
@@ -44,27 +46,25 @@ const Canvas = (props) => {
     const ctx = canvas.getContext("2d");
 
     //join to chat room
-    socket.emit('JOIN_ROOM', [props.username,path])
+    socket.emit('JOIN_ROOM', [props.username, path]);
 
-      sendData()
-      socket.on("sendData", (data) => {
-        const newCharactersData = data;
-        newCharactersData[props.username] = userCharacters[props.username];
+    sendData();
+    socket.on("sendData", (data) => {
+      const newCharactersData = data;
+      newCharactersData[props.username] = userCharacters[props.username];
 
-        const newCharacters = { ...userCharacters };
-        // set main user character
-        newCharacters[props.username] = userCharacters[props.username];
-        // console.log("before create New CHARACTERS", newCharacters)
+      const newCharacters = { ...userCharacters };
+      // set main user character
+      newCharacters[props.username] = userCharacters[props.username];
 
-        const allUsersState = data.usersInRooms[props.room];
-        Object.keys(allUsersState).map(user => {
-          // console.log(user)
-          if (typeof user !== 'undefined') {
-            if (user !== props.username) {
-              newCharacters[user] = new Characters(allUsersState[user])
-            }
+      const allUsersState = data.usersInRooms[props.room];
+      Object.keys(allUsersState).map(user => {
+        if (typeof user !== 'undefined') {
+          if (user !== props.username) {
+            newCharacters[user] = new Characters(allUsersState[user]);
           }
         }
+      }
         // console.log("New CHARACTERS", newCharacters)
       );
 
@@ -88,17 +88,14 @@ const Canvas = (props) => {
     }
 
 
-    // });   //socket ends
-
 
     window.addEventListener("keydown", (e) => {
       userCharacters[props.username].move(e);
       setUserCharacters(userCharacters);
-      sendData()
+      sendData();
 
       // move to JS
       if (props.room === 'plaza') {
-        // console.log("Im in Plaza")
         if (
           userCharacters[props.username].state.x >= 420 &&
           userCharacters[props.username].state.x <= 460 &&
@@ -106,42 +103,39 @@ const Canvas = (props) => {
           userCharacters[props.username].state.y <= 140
         ) {
           sendData(props.room);
-          setUserCharacters({ ...userCharacters, [props.username]: undefined })
+          setUserCharacters({ ...userCharacters, [props.username]: undefined });
           handleRoom('js');
         }
 
         // move to Ruby
         if (
-          userCharacters[props.username].state.x >= 710&&
+          userCharacters[props.username].state.x >= 710 &&
           userCharacters[props.username].state.x <= 770 &&
           userCharacters[props.username].state.y >= 430 &&
           userCharacters[props.username].state.y <= 470
-          ) {
-            sendData(props.room);
-            setUserCharacters({ ...userCharacters, [props.username]: undefined })
-            handleRoom('ruby');
-          }
+        ) {
+          sendData(props.room);
+          setUserCharacters({ ...userCharacters, [props.username]: undefined });
+          handleRoom('ruby');
+        }
       }
       // move to the Plaza
       if (props.room !== 'plaza') {
-        // console.log("Im in LANG romm ")
-
         if (
           userCharacters[props.username].state.x <= 50 &&
           userCharacters[props.username].state.y >= 410 &&
           userCharacters[props.username].state.y <= 450
         ) {
           sendData(props.room);
-          setUserCharacters({ ...userCharacters, [props.username]: undefined })
+          setUserCharacters({ ...userCharacters, [props.username]: undefined });
           handleRoom('plaza');
         }
       }
-
     });
 
 
     window.addEventListener("keyup", () => {
-      setUserCharacters(userCharacters)
+      setUserCharacters(userCharacters);
       if (userCharacters[props.username] !== undefined) {
         sendData();
       }
@@ -150,14 +144,13 @@ const Canvas = (props) => {
     return () => {
       window.removeEventListener("keydown", (e) => userCharacters[0].move(e));
       window.removeEventListener("keyup", () => userCharacters[0].stop());
+      socket.disconnect(); // todo need socket cleanup ?
     };
-
   }, []);
 
 
 
   useEffect(() => {
-
     socket.on("dataToCanvas", data => {
 
       // when msg comes in, setMsg with its user
@@ -166,15 +159,18 @@ const Canvas = (props) => {
       setMsg(prev => ({
         ...prev,
         [data.nickname]: data.content
-      }))
+      }));
       setTimeout(() => {
         setMsg(prev => ({
           ...prev,
           [data.nickname]: ""
-        }))
+        }));
       }, 7000);
     });
-  }, [socket])
+    return () => {
+      socket.off("dataToCanvas"); // todo need socket cleanup ?
+    };
+  }, [socket]);
 
 
 
@@ -198,17 +194,15 @@ const Canvas = (props) => {
   }, [userCharacters]);
 
 
-
-
   //--------- functions
   // if user hit the specific position -> redirect to the page
   function handleRoom(room) {
     // userDataInCookies
     // navigate(roomLists[room], { state: [props.username, props.avatar] });
-    const userLanguages = userDataInCookies.userLanguages
-    const userID = userDataInCookies.id
+    const userLanguages = userDataInCookies.userLanguages;
+    const userID = userDataInCookies.id;
     navigate(roomLists[room], { state: [props.username, props.avatar, userLanguages, userID] });
-    navigate(0, { state: [props.username, props.avatar, userLanguages, userID] })
+    navigate(0, { state: [props.username, props.avatar, userLanguages, userID] });
   };
 
   function sendData(removeFromRoom) {

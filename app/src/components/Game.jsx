@@ -4,7 +4,6 @@ import Canvas from "./Canvas";
 import "./Game.scss";
 import Chat from "./Chat";
 import Online from "./Online";
-import Profile from "./Profile.jsx";
 
 import { useLocation } from "react-router-dom";
 import FriendList from "./FriendsList";
@@ -13,7 +12,6 @@ export default function Game(props) {
   const location = useLocation();
   const { nickname, socket } = useContext(SocketContext);
   const { sendMessage, sendPrivateMessage } = props
-  const [msg, setMsg] = useState({});
 
   console.log('location', location);
 
@@ -25,14 +23,11 @@ export default function Game(props) {
   }
 
   function sendUrl(url){
-    console.log(socket);
     socket && socket.emit("lecture", url);
-    console.log("SENT")
   }
 
 useEffect(() => {
     socket.on("new lecture", data => {
-      console.log(data)
       setLecture(data)
     })
 },[socket])

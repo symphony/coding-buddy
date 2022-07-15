@@ -1,11 +1,9 @@
-import { useEffect, useCallback, useContext, useState } from "react";
+import { useEffect, useContext } from "react";
 import { SocketContext, UserListContext } from "../App.js";
 
 export default function Profile(props) {
   const { clicked, profiles, nickname, setProfiles, profileShow, setProfileShow } = useContext(UserListContext);
   const { socket } = useContext(SocketContext);
-
-  const [profile, setProfile] = useState({});
 
   useEffect(() => {
     socket.on("update login users information", ({ disconnectedUser }) => {

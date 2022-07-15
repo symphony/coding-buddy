@@ -5,19 +5,19 @@ import { UserListContext } from '../App.js';
 import Avatar from "./Avatar.jsx";
 import Menu from "./Menu.jsx";
 import Profile from "./Profile.jsx";
-import './Online.scss'
+import './Online.scss';
 
 export default function Online(props) {
-  const { online, socket, nickname } = useContext(SocketContext);
-  const { setClicked, setShow, blockAddFriendAlert } = useContext(UserListContext);
+  const { socket } = useContext(SocketContext);
+  const { setClicked, setShow, nickname, online } = useContext(UserListContext);
   const [showMenu, setShowMenu] = useState(false);
   const removeSelfAndAll = online.filter(obj =>
     obj.value !== "all" && obj.value !== nickname
-  )
+  );
 
   const closeMenu = () => {
-    setShowMenu(false)
-  }
+    setShowMenu(false);
+  };
 
   const usersOnline = removeSelfAndAll.map((obj, i) =>
     <div className="online-user" key={i}>
@@ -25,14 +25,14 @@ export default function Online(props) {
         setShowMenu(showMenu === false ? obj.value : false);
         setClicked(obj);
         setShow(true); // 클릭 뒤 사라지게
-        console.log(obj)
+        // console.log(obj)
       }}>
         {<Avatar url={obj.avatar} alt="avatar" />}
         <p>{obj.value}</p>
       </li>
-      { showMenu === obj.value ?<Menu close={closeMenu} obj={obj} /> : null }
+      {showMenu === obj.value ? <Menu close={closeMenu} obj={obj} /> : null}
     </div>
-    );
+  );
 
 
   useEffect(() => {

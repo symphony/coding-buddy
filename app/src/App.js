@@ -29,7 +29,7 @@ function App() {
   const [show, setShow] = useState(false);
   const [clicked, setClicked] = useState({});
   const [recipient, setRecipient] = useState({ value: "all", label: "all" });
-  const [user, setUser] = useState({ value: "all", label: "all", avatars: 1});
+  const [user, setUser] = useState({ value: "all", label: "all", avatars: 1 });
   const [profiles, setProfiles] = useState({});
   const [profileShow, setProfileShow] = useState("none");
   const [blockAddFriendAlert, setBlockAddFriendAlert] = useState("add-friend");
@@ -71,7 +71,7 @@ function App() {
     const currentCookies = cookies.getAll();
 
     if (currentCookies.userdata) {
-      setUser({ ...user, avatar: avatars[currentCookies.userdata.avatar]});
+      setUser({ ...user, avatar: avatars[currentCookies.userdata.avatar] });
     }
     // console.log('currentCookies', currentCookies)
     // cookies maxAge 3600.
@@ -88,7 +88,7 @@ function App() {
         };
         goChat(currentCookies.userdata.userName, currentCookies.userdata.avatar, currentCookies.userdata.userLanguages, currentCookies.userdata.userID);
       }
-      if (!currentCookies.userdata) {
+      if (!currentCookies.userdata && location.pathname !== "/register") {
         // if (!urlLists.includes(location.pathname)) {
         clearCookies();
         navigate("/");
@@ -200,7 +200,7 @@ function App() {
   };
 
   const createSocketIdNameObject = (username) => {
-    console.log(username, socket.id)
+    // console.log(username, socket.id)
     socket && socket.emit("SET USERNAME", { "socketID": socket.id, "username": username });
   };
 
@@ -215,11 +215,11 @@ function App() {
 
   // = render main App =
   return (
-    <SocketContext.Provider value={{ socket, online, nickname, friendList }} >
-      <UserListContext.Provider value={{ show, setShow, recipient, setRecipient, clicked, setClicked, user, setUser, profiles, nickname, setProfiles, profileShow, setProfileShow, blockAddFriendAlert, setBlockAddFriendAlert }} >
+    <SocketContext.Provider value={{ socket }} >
+      <UserListContext.Provider value={{ show, setShow, recipient, setRecipient, clicked, setClicked, user, setUser, profiles, nickname, setProfiles, profileShow, setProfileShow, blockAddFriendAlert, setBlockAddFriendAlert, online, friendList }} >
         <Routes>
           <Route path='/' element={<Login setUser={createSocketIdNameObject} />} />
-          <Route path='/register' element={<Register setUser={createSocketIdNameObject}/>} />
+          <Route path='/register' element={<Register setUser={createSocketIdNameObject} />} />
           <Route path='/login' element={<Login setUser={createSocketIdNameObject} />} />
           <Route path={`/game/${room}`} element={(
             <Game
@@ -239,4 +239,5 @@ function App() {
     </SocketContext.Provider>
   );
 };
+
 export default App;

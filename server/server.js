@@ -21,6 +21,8 @@ const { createAdapter } = require("@socket.io/postgres-adapter"); //app.get, 안
 const sessionMiddleware = session({
   secret: "coding_buddy",
   cookie: { maxAge: 60000 },
+  resave: true,
+  saveUninitialized: true,
 });
 const { getOneUserLanguages } = require("./coding_buddy_db");
 const { Pool } = require("pg");
@@ -135,7 +137,7 @@ io.on("connection", (socket) => {
       pool.query("SELECT * FROM users", // {id: , username: , password: , email: , avatar: , lan_id: }
         // [existUsername],
         (err, res_1) => {
-          if (err) throw err;
+          if (err) console.error(err);
           // console.log(existUsername) // 내이름
           if (res_1.rows[0]) { // 테이블이 존재하면 // 불필요한듯
             const allusersTable = res_1.rows; // 전체 유저테이블
@@ -171,8 +173,8 @@ io.on("connection", (socket) => {
                     // followedInfo[row.username]["email"] = row.email
                   }
                 });
-                    // console.log("INFOMATION", usernames)
-                    // console.log(usernames);
+                // console.log("INFOMATION", usernames)
+                // console.log(usernames);
                 pool.query(
                   "SELECT * FROM user_language JOIN languages ON language_id=languages.id", (err, res_3) => {
                     res_3.rows.map(userLanguageID => { // @@ userLanguageName 으로 바꾸고 밑에서 =>// obj.language_name 으로 하기
@@ -247,10 +249,10 @@ io.on("connection", (socket) => {
   });
 
   socket.on("lecture", url => {
-    console.log(url)
-    const address = 'https://www.youtube.com/embed/' + url.split('=')[1]
+    console.log(url);
+    const address = 'https://www.youtube.com/embed/' + url.split('=')[1];
     io.emit("new lecture", address);
-  })
+  });
 
 
   // ADD FRIEND
@@ -260,7 +262,7 @@ io.on("connection", (socket) => {
     pool.query(
       "SELECT id, username FROM users WHERE username=$1", [addFriendName],
       (err, res) => {
-        console.log('res', res)
+        console.log('res', res);
         // res.rows => users table [{id: , username: ,....}]
         const targetID = res.rows[0].id;
         // console.log("target users id", targetID);
@@ -282,7 +284,7 @@ io.on("connection", (socket) => {
             newFriendLanguageObj[addFriendName] = { languages };
             // console.log("WHAT", addFriendName, {languages});
             // socket.emit("updateFriendsList", newFriendLanguageObj);
-            console.log("NEW FRIEND ADDED")
+            console.log("NEW FRIEND ADDED");
             socket.emit("updateFriendsList", { newFriendName: addFriendName, languages: languages });
           });
 
@@ -374,27 +376,27 @@ io.on("connection", (socket) => {
     };
     // console.log('JOIN TO NEW ROOM', newRoom)
 
-      // receive.message는 ChatRoom.jsx 에서 defined
-  // --------------- SEND MESSAGE ---------------
-  socket.on("SEND_MESSAGE", (requestData) => {
-    //emiting back to receive message in line 67
-    console.log('REQUEST', requestData);
-    const responseData = {
-      ...requestData,
-      type: "SEND_MESSAGE",
-      time: new Date(),
-    };
-    console.log("SEND TO NEWROOM", responseData)
-    // SVGPreserveAspectRatio.to(roomName).emit
-    io.to(newRoom).emit("RECEIVE_MESSAGE", responseData);
+    // receive.message는 ChatRoom.jsx 에서 defined
+    // --------------- SEND MESSAGE ---------------
+    socket.on("SEND_MESSAGE", (requestData) => {
+      //emiting back to receive message in line 67
+      console.log('REQUEST', requestData);
+      const responseData = {
+        ...requestData,
+        type: "SEND_MESSAGE",
+        time: new Date(),
+      };
+      console.log("SEND TO NEWROOM", responseData);
+      // SVGPreserveAspectRatio.to(roomName).emit
+      io.to(newRoom).emit("RECEIVE_MESSAGE", responseData);
 
-    //responseData = chat message
-    //@@@@@@ ChatRoom.jsx line 21
-    // console.log(
-    //   `"SEND_MESSAGE" is fired with data: ${JSON.stringify(responseData)}`
-    // );
-    io.emit("dataToCanvas", responseData);
-  });
+      //responseData = chat message
+      //@@@@@@ ChatRoom.jsx line 21
+      // console.log(
+      //   `"SEND_MESSAGE" is fired with data: ${JSON.stringify(responseData)}`
+      // );
+      io.emit("dataToCanvas", responseData);
+    });
 
 
     // "room 1"에는 이벤트타입과 서버에서 받은 시각을 덧붙여 데이터를 그대로 전송.
@@ -455,27 +457,24 @@ app.post("/login", (req, res) => {
   // and password.. userName=$1 AND userpassword=$2
   return pool.query(
     "SELECT * FROM users WHERE email=$1 AND password=$2",
-    [email, password],
-    (err, res_1) => {
-      if (err) throw err;
-      if (res_1.rows[0]) {
+    [email, password])
+    .then((res) => {
+      if (res.rows[0]) {
         // user exist
         // get followeds
-        const userInfo = res_1.rows[0];
+        const userInfo = res.rows[0];
         const userID = userInfo.id;
         const userName = userInfo.username;
         const avatar = userInfo.avatar_id;
-        // console.log(res_1.rows[0]); // id: 3, username: "mike", password: "mike", email: "test2@test.com", avatar_id: 1
         // find languages
 
         pool.query(
           "SELECT * FROM user_language WHERE user_id=$1",
-          [userID],
-          (err, res_2) => {
+          [userID])
+          .then((res) => {
             const userLanguages = [];
-            if (err) throw err;
-            if (res_2.rows.length > 0) {
-              res_2.rows.forEach((obj) => {
+            if (res.rows.length > 0) {
+              res.rows.forEach((obj) => {
                 userLanguages.push(obj.language_id);
               });
               const loginUserData = {
@@ -487,10 +486,10 @@ app.post("/login", (req, res) => {
               };
               res.status(201).send(loginUserData); //object - username, avatar, language
             } else {
-              console.log("No available language", res_2.rows);
+              console.log("No available language", res.rows);
             }
           }
-        );
+          );
 
 
       } else {
@@ -498,7 +497,7 @@ app.post("/login", (req, res) => {
         res.status(201).send(false);
       }
     }
-  );
+    );
 });
 
 
@@ -526,8 +525,8 @@ app.post("/register", (req, res) => {
     })
     .then((response) => {
       const { id } = response.rows[0];
-      const userID = id
-      const userData = {userName, avatar, userLanguages, userID};
+      const userID = id;
+      const userData = { userName, avatar, userLanguages, userID };
 
       userLanguages.forEach((lang_id) => {
         pool.query(
@@ -536,7 +535,7 @@ app.post("/register", (req, res) => {
         );
       });
       // sending user info back to Register.jsx (as res.data)
-      console.log("REGISTRATION SUCCESS", userData)
+      console.log("REGISTRATION SUCCESS", userData);
       res.status(201).send(userData);
     })
     .catch((e) => { console.error(e); });

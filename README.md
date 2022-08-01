@@ -11,7 +11,7 @@ Built with React.js, Socket.IO, React Router and Express Node.js
 * Jordan Ciurcovich: https://github.com/symphony
 
 ## Preview
-* Lighthouse Plaza - see other users online <br />
+* Lighthouse Town Plaza - see other users online <br />
 ![see other users online in app plaza](_docs/01-onlineUserSync.gif)
 
 * Login <br />
@@ -93,7 +93,7 @@ Built with React.js, Socket.IO, React Router and Express Node.js
 - `ctrl + C` to stop the server or client
 
 
-### Run
+### Run the App
 - run server and client together from **server** folder \
 `npm run runall`
 
